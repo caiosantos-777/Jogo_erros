@@ -8,10 +8,9 @@ $database = "crud_aula";
 $conn = new mysqli($host, $user, $password, $database);
 
 if ($conn->connect_error) {
-    die("Erro na conexão: " . $conn->connect_error); // CORRIGIDO: Adicionado ponto e vírgula
+    die("Erro na conexão: " . $conn->connect_error);
 }
 
-// CADASTRAR
 if (isset($_POST['cadastrar'])) {
 
     $nome = $_POST['nome'];
@@ -27,7 +26,6 @@ if (isset($_POST['cadastrar'])) {
     exit;
 }
 
-// EXCLUIR
 if (isset($_GET['excluir'])) {
 
     $id = $_GET['excluir'];
@@ -42,7 +40,6 @@ if (isset($_GET['excluir'])) {
     exit;
 }
 
-// EDITAR (SALVAR ALTERAÇÕES)
 if (isset($_POST['editar'])) {
 
     $id = $_POST['id'];
@@ -52,14 +49,13 @@ if (isset($_POST['editar'])) {
     $sql = "UPDATE usuarios SET nome = ?, email = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
-    $stmt->bind_param("ssi", $nome, $email, $id); // CORRIGIDO: Adicionado ponto e vírgula
+    $stmt->bind_param("ssi", $nome, $email, $id); 
     $stmt->execute();
 
     header("Location: index.php");
     exit;
 }
 
-// CARREGAR DADOS PARA EDIÇÃO
 $usuario_edit = null;
 if (isset($_GET['editar'])) {
     $id = $_GET['editar'];
@@ -72,7 +68,6 @@ if (isset($_GET['editar'])) {
     $usuario_edit = $stmt->get_result()->fetch_assoc();
 }
 
-// BUSCAR USUÁRIOS
 $sql = "SELECT id, nome, email FROM usuarios ORDER BY id DESC";
 $resultado = $conn->query($sql);
 
@@ -92,7 +87,6 @@ $resultado = $conn->query($sql);
 
     <form method="POST">
 
-        <!-- Campo oculto contendo o ID para a edição funcionar -->
         <?php if ($usuario_edit): ?>
             <input type="hidden" name="id" value="<?= $usuario_edit['id'] ?>">
         <?php endif; ?>
