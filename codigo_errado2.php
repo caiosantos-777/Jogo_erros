@@ -8,7 +8,7 @@ $database = "crud_aula";
 $conn = new mysqli($host, $user, $password, $database);
 
 if ($conn->connect_error) {
-    die("Erro na conexão: " . $conn->connect_error)
+    die("Erro na conexão: " . $conn->connect_error); // CORRIGIDO: Adicionado ponto e vírgula
 }
 
 // CADASTRAR
@@ -42,7 +42,7 @@ if (isset($_GET['excluir'])) {
     exit;
 }
 
-// EDITAR
+// EDITAR (SALVAR ALTERAÇÕES)
 if (isset($_POST['editar'])) {
 
     $id = $_POST['id'];
@@ -52,15 +52,30 @@ if (isset($_POST['editar'])) {
     $sql = "UPDATE usuarios SET nome = ?, email = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
-    $stmt->bind_param("ssi", $nome, $email, $id)
+    $stmt->bind_param("ssi", $nome, $email, $id); // CORRIGIDO: Adicionado ponto e vírgula
     $stmt->execute();
 
     header("Location: index.php");
     exit;
 }
 
+// CARREGAR DADOS PARA EDIÇÃO
+$usuario_edit = null;
+if (isset($_GET['editar'])) {
+    $id = $_GET['editar'];
+
+    $sql = "SELECT * FROM usuarios WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $usuario_edit = $stmt->get_result()->fetch_assoc();
+}
+
+// BUSCAR USUÁRIOS
 $sql = "SELECT id, nome, email FROM usuarios ORDER BY id DESC";
 $resultado = $conn->query($sql);
+
 ?>
 
 <!DOCTYPE html>
@@ -73,23 +88,33 @@ $resultado = $conn->query($sql);
 
 <body>
 
-    <h1>Cadastro de Usuários</h1>
+    <h1><?= $usuario_edit ? 'Editar Usuário' : 'Cadastro de Usuários' ?></h1>
 
     <form method="POST">
 
+        <!-- Campo oculto contendo o ID para a edição funcionar -->
+        <?php if ($usuario_edit): ?>
+            <input type="hidden" name="id" value="<?= $usuario_edit['id'] ?>">
+        <?php endif; ?>
+
         <label>Nome:</label>
-        <input type="text" name="nome" required>
+        <input type="text" name="nome" value="<?= htmlspecialchars($usuario_edit['nome'] ?? '') ?>" required>
 
         <br><br>
 
         <label>E-mail:</label>
-        <input type="email" name="email" required>
+        <input type="email" name="email" value="<?= htmlspecialchars($usuario_edit['email'] ?? '') ?>" required>
 
         <br><br>
 
-        <button type="submit" name="cadastrar">
-            Cadastrar
-        </button>
+        <?php if ($usuario_edit): ?>
+            <button type="submit" name="editar">Salvar Alterações</button>
+            <a href="index.php">Cancelar</a>
+        <?php else: ?>
+            <button type="submit" name="cadastrar">
+                Cadastrar
+            </button>
+        <?php endif; ?>
 
     </form>
 
@@ -113,19 +138,18 @@ $resultado = $conn->query($sql);
                 </td>
 
                 <td>
-                    <?= $usuario['nome'] ?>
+                    <?= htmlspecialchars($usuario['nome']) ?>
                 </td>
 
                 <td>
-                    <?= $usuario['email'] ?>
+                    <?= htmlspecialchars($usuario['email']) ?>
                 </td>
 
                 <td>
-
-                    <a href="index.php?excluir=<?= $usuario['id'] ?>">
+                    <a href="index.php?editar=<?= $usuario['id'] ?>">Editar</a> | 
+                    <a href="index.php?excluir=<?= $usuario['id'] ?>" onclick="return confirm('Tem certeza?');">
                         Excluir
                     </a>
-
                 </td>
 
             </tr>
