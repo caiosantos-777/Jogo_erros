@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$database = "crud_aula";
+$database = "Jogos_erros";
 
 $conn = new mysqli($host, $user, $password, $database);
 
