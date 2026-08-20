@@ -11,10 +11,7 @@ if ($conn->connect_error) {
     die("Erro na conexão: " . $conn->connect_error);
 }
 
-
-// CADASTRAR
 if (isset($_POST['cadastrar'])) {
-
     $nome = $_POST['nome'];
     $email = $_POST['email'];
 
@@ -28,10 +25,7 @@ if (isset($_POST['cadastrar'])) {
     exit;
 }
 
-
-// EXCLUIR
 if (isset($_GET['excluir'])) {
-
     $id = $_GET['excluir'];
 
     $sql = "DELETE FROM usuarios WHERE id = ?";
@@ -44,17 +38,13 @@ if (isset($_GET['excluir'])) {
     exit;
 }
 
-
-// EDITAR
 if (isset($_POST['editar'])) {
-
     $id = $_POST['id'];
     $nome = $_POST['nome'];
     $email = $_POST['email'];
 
     $sql = "UPDATE usuarios SET nome = ?, email = ? WHERE id = ?";
-
-$stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
     $stmt->bind_param("ssi", $nome, $email, $id);
     $stmt->execute();
@@ -63,13 +53,22 @@ $stmt = $conn->prepare($sql);
     exit;
 }
 
+$usuario_edit = null;
+if (isset($_GET['editar'])) {
+    $id = $_GET['editar'];
 
-// BUSCAR USUÁRIOS
+    $sql = "SELECT * FROM usuarios WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $usuario_edit = $stmt->get_result()->fetch_assoc();
+}
+
 $sql = "SELECT id, nome, email FROM usuarios ORDER BY id DESC";
 $resultado = $conn->query($sql);
 
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -80,65 +79,57 @@ $resultado = $conn->query($sql);
 
 <body>
 
-    <h1>Cadastro de Usuários</h1>
+    <h1><?= $usuario_edit ? 'Editar Usuário' : 'Cadastro de Usuários' ?></h1>
 
     <form method="POST">
 
-        <label>Nome:</label>
-        <input type="text" name="nome" required>
+        <?php if ($usuario_edit): ?>
+            <input type="hidden" name="id" value="<?= $usuario_edit['id'] ?>">
+        <?php endif; ?>
+
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" value="<?= htmlspecialchars($usuario_edit['nome'] ?? '') ?>" required>
 
         <br><br>
 
-        <label>E-mail:</label>
-        <input type="email" name="email" required>
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" value="<?= htmlspecialchars($usuario_edit['email'] ?? '') ?>" required>
 
         <br><br>
 
-        <button type="submit" name="cadastrar">
-            Cadastrar
-        </button>
+        <?php if ($usuario_edit): ?>
+            <button type="submit" name="editar">Salvar Alterações</button>
+            <a href="index.php">Cancelar</a>
+        <?php else: ?>
+            <button type="submit" name="cadastrar">Cadastrar</button>
+        <?php endif; ?>
 
     </form>
 
     <h2>Usuários cadastrados</h2>
 
     <table border="1">
-
-        <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>Ações</th>
-        </tr>
-
-        <?php while ($usuario = $resultado->fetch_assoc()) { ?>
-
+        <thead>
             <tr>
-
-                <td>
-                    <?= $usuario['id'] ?>
-                </td>
-
-                <td>
-                    <?= $usuario['nome'] ?>
-                </td>
-
-                <td>
-                    <?= $usuario['email'] ?>
-                </td>
-
-                <td>
-
-                    <a href="index.php?excluir=<?= $usuario['id'] ?>">
-                        Excluir
-                    </a>
-
-                </td>
-
+                <th>ID</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Ações</th>
             </tr>
-
-        <?php } ?>
-
+        </thead>
+        <tbody>
+            <?php while ($usuario = $resultado->fetch_assoc()): ?>
+                <tr>
+                    <td><?= $usuario['id'] ?></td>
+                    <td><?= htmlspecialchars($usuario['nome']) ?></td>
+                    <td><?= htmlspecialchars($usuario['email']) ?></td>
+                    <td>
+                        <a href="index.php?editar=<?= $usuario['id'] ?>">Editar</a> | 
+                        <a href="index.php?excluir=<?= $usuario['id'] ?>" onclick="return confirm('Tem certeza que deseja excluir?');">Excluir</a>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
     </table>
 
 </body>
